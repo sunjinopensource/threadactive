@@ -1,7 +1,6 @@
-import threadactive
 import time
-import os
 import threading
+import threadactive
 
 class BackWorker(threadactive.Agent):
     def tick(self):
