@@ -68,3 +68,25 @@ class Agent(object):
     def stop(self, timeout=None):
         """Wait until timeout(if not None) or all message handled in background"""
         self._active.stop(timeout)
+
+
+class _CallWrapper:
+    def __init__(self, agent, func, *args, **kwargs):
+        self.agent = agent
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+    def __call__(self, *args, **kwargs):
+        self.func(self.agent, *self.args, **self.kwargs)
+
+
+def backend(func):
+    def wrapper(self, *args, **kwargs):
+        self.send_to_back(_CallWrapper(self, func, args, kwargs))
+    return wrapper
+
+
+def frontend(func):
+    def wrapper(self, *args, **kwargs):
+        self.send_to_fore(_CallWrapper(self, func, args, kwargs))
+    return wrapper
