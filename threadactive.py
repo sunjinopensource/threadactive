@@ -42,10 +42,10 @@ class Agent(object):
         self._active = _Active(self)
         self._queue = _Queue.Queue()
 
-    def send_to_fore(self, msg):
+    def send_to_frontend(self, msg):
         self._queue.put(msg)
 
-    def send_to_back(self, msg):
+    def send_to_backend(self, msg):
         self._active.send(msg)
 
     def tick(self):
@@ -82,11 +82,11 @@ class _CallWrapper:
 
 def backend(func):
     def wrapper(self, *args, **kwargs):
-        self.send_to_back(_CallWrapper(self, func, args, kwargs))
+        self.send_to_backend(_CallWrapper(self, func, args, kwargs))
     return wrapper
 
 
 def frontend(func):
     def wrapper(self, *args, **kwargs):
-        self.send_to_fore(_CallWrapper(self, func, args, kwargs))
+        self.send_to_frontend(_CallWrapper(self, func, args, kwargs))
     return wrapper
