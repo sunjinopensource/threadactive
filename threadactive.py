@@ -2,7 +2,7 @@ import sys
 import threading
 
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -84,7 +84,7 @@ class _CallWrapper:
 def backend(func):
     def wrapper(self, *args, **kwargs):
         if threading.current_thread().ident == self._main_thread_id:
-            self.send_to_backend(_CallWrapper(self, func, args, kwargs))
+            self.send_to_backend(_CallWrapper(self, func, *args, **kwargs))
         else:
             func(self, *args, **kwargs)
     return wrapper
@@ -95,5 +95,5 @@ def frontend(func):
         if threading.current_thread().ident == self._main_thread_id:
             func(self, *args, **kwargs)
         else:
-            self.send_to_frontend(_CallWrapper(self, func, args, kwargs))
+            self.send_to_frontend(_CallWrapper(self, func, *args, **kwargs))
     return wrapper
