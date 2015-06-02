@@ -2,7 +2,7 @@ import sys
 import threading
 
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -39,6 +39,7 @@ class _Active(threading.Thread):
 
 class Agent(object):
     def __init__(self):
+        self._main_thread_id = threading.current_thread().ident
         self._active = _Active(self)
         self._queue = _Queue.Queue()
 
@@ -82,11 +83,17 @@ class _CallWrapper:
 
 def backend(func):
     def wrapper(self, *args, **kwargs):
-        self.send_to_backend(_CallWrapper(self, func, args, kwargs))
+        if threading.current_thread().ident == self._main_thread_id:
+            self.send_to_backend(_CallWrapper(self, func, args, kwargs))
+        else:
+            func(self, *args, **kwargs)
     return wrapper
 
 
 def frontend(func):
     def wrapper(self, *args, **kwargs):
-        self.send_to_frontend(_CallWrapper(self, func, args, kwargs))
+        if threading.current_thread().ident == self._main_thread_id:
+            func(self, *args, **kwargs)
+        else:
+            self.send_to_frontend(_CallWrapper(self, func, args, kwargs))
     return wrapper
