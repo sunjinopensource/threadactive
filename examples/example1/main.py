@@ -31,9 +31,17 @@ class BackWorker(threadactive.Agent):
 
 
 def main():
+    i = 0
     bw = BackWorker()
     while True:
         bw.tick()
+
+        # restart backend thread
+        i += 1
+        if i > 10:
+            bw.stop(3)
+            bw.start()
+            i = 0
 
 
 if __name__ == '__main__':

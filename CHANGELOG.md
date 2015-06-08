@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.4
+
++ backend thread restart mechanism
+
 ## 0.1.3
 
 fix backend & frontend pass args, kwargs to _CallWrapper error
