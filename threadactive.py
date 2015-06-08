@@ -36,6 +36,7 @@ class _Active(threading.Thread):
         threading.Thread.__init__(self)
         self._agent = agent
         self._queue = _Queue.Queue()
+        self.setDaemon(True)
         self.start()
 
     def stop(self, timeout=None):
