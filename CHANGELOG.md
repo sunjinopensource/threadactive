@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.5
+
+setDaemon(True)
+do not force terminate backend thread when stop
+
 ## 0.1.4
 
 + backend thread restart mechanism

@@ -38,7 +38,7 @@ def main():
 
         # restart backend thread
         i += 1
-        if i > 10:
+        if i > 5:
             bw.stop(3)
             bw.start()
             i = 0
