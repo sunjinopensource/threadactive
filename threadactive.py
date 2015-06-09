@@ -4,7 +4,7 @@ import inspect
 import ctypes
 
 
-__version__ = '0.1.5'
+__version__ = '0.1.6'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -17,32 +17,48 @@ else:
     raise RuntimeError('Unsupported python version.')
 
 
+def done_message():
+    pass
+
+
+def abort_message():
+    pass
+
+
 class _Active(threading.Thread):
     def __init__(self, agent):
         threading.Thread.__init__(self)
         self._agent = agent
         self._queue = _Queue.Queue()
+        self._abort_event = threading.Event()
         self.setDaemon(True)
         self.start()
 
-    def stop(self, timeout=None):
-        self.send(None)
+    def stop(self, timeout=None, msg=done_message):
+        self.send(msg)
         self.join(timeout)
-        self._agent = None
-        self._queue = None
+        # self._agent = None
+        # self._queue = None
+        # self._abort_event = None
 
     def run(self):
         if self._queue is None:
             return
 
         while True:
+            if self._abort_event.is_set():
+                break
             msg = self._queue.get()
-            if msg is None:
+            if msg is done_message:
                 break
             msg(self._agent)
 
     def send(self, msg):
-        self._queue.put(msg)
+        if msg is abort_message:
+            if not self._abort_event.is_set():
+                self._abort_event.set()
+        else:
+            self._queue.put(msg)
 
 
 class Agent(object):
@@ -58,10 +74,10 @@ class Agent(object):
         self._active = _Active(self)
         self._queue = _Queue.Queue()
 
-    def stop(self, timeout=None):
+    def stop(self, timeout=None, msg=done_message):
         if not self.is_started():
             return
-        self._active.stop(timeout)
+        self._active.stop(timeout, msg)
         self._active = None
         self._queue = None
 

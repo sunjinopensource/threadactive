@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
++ done_message & abort_message
+
 ## 0.1.5
 
 setDaemon(True)
