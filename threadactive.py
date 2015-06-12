@@ -4,7 +4,7 @@ import inspect
 import ctypes
 
 
-__version__ = '0.1.6'
+__version__ = '0.1.7'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -51,7 +51,9 @@ class _Active(threading.Thread):
             msg = self._queue.get()
             if msg is done_message:
                 break
-            msg(self._agent)
+            ret = msg(self._agent)
+            if ret is False:
+                break
 
     def send(self, msg):
         if msg is abort_message:
