@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.8
+
++ clear_message
+
 ## 0.1.7
 
 + break the thread if handle_message return False

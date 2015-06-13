@@ -4,7 +4,7 @@ import inspect
 import ctypes
 
 
-__version__ = '0.1.7'
+__version__ = '0.1.8'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -22,6 +22,10 @@ def done_message():
 
 
 def abort_message():
+    pass
+
+
+def clear_message():
     pass
 
 
@@ -59,6 +63,9 @@ class _Active(threading.Thread):
         if msg is abort_message:
             if not self._abort_event.is_set():
                 self._abort_event.set()
+        elif msg is clear_message:
+            while not self._queue.empty():
+                self._queue.get()
         else:
             self._queue.put(msg)
 
