@@ -4,7 +4,7 @@ import inspect
 import ctypes
 
 
-__version__ = '0.1.8'
+__version__ = '0.1.9'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -30,9 +30,8 @@ def clear_message():
 
 
 class _Active(threading.Thread):
-    def __init__(self, agent):
+    def __init__(self):
         threading.Thread.__init__(self)
-        self._agent = agent
         self._queue = _Queue.Queue()
         self._abort_event = threading.Event()
         self.setDaemon(True)
@@ -55,7 +54,7 @@ class _Active(threading.Thread):
             msg = self._queue.get()
             if msg is done_message:
                 break
-            ret = msg(self._agent)
+            ret = msg()
             if ret is False:
                 break
 
@@ -80,7 +79,7 @@ class Agent(object):
 
     def start(self):
         assert not self.is_started()
-        self._active = _Active(self)
+        self._active = _Active()
         self._queue = _Queue.Queue()
 
     def stop(self, timeout=None, msg=done_message):
@@ -107,6 +106,11 @@ class Agent(object):
         """
         assert self.is_started()
 
+        # thread maybe exit on error, in that case, the related active object will not be auto destroyed, so destroy it
+        if self._active and not self._active.is_alive():
+            self.stop()
+            return False
+
         while True:
             try:
                 msg = self._queue.get_nowait()
@@ -115,6 +119,7 @@ class Agent(object):
             ret = msg()
             if ret is False:
                 return False
+
         return True
 
     def is_started(self):
@@ -128,7 +133,7 @@ class _CallWrapper:
         self.args = args
         self.kwargs = kwargs
     def __call__(self, *args, **kwargs):
-        self.func(self.agent, *self.args, **self.kwargs)
+        return self.func(self.agent, *self.args, **self.kwargs)
 
 
 def backend(func):
@@ -136,14 +141,14 @@ def backend(func):
         if threading.current_thread().ident == self._main_thread_id:
             self.send_to_backend(_CallWrapper(self, func, *args, **kwargs))
         else:
-            func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
     return wrapper
 
 
 def frontend(func):
     def wrapper(self, *args, **kwargs):
         if threading.current_thread().ident == self._main_thread_id:
-            func(self, *args, **kwargs)
+            return func(self, *args, **kwargs)
         else:
             self.send_to_frontend(_CallWrapper(self, func, *args, **kwargs))
     return wrapper

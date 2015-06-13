@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9
+
+1. -_Active._agent
+2. stop agent when backend thread exit
+3. fix wrapper return value
+
 ## 0.1.8
 
 + clear_message
