@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.0.0
+
+1. _Active -> _Backend
+2. done_message -> done, abort_message -> abort, clear_message -> clear
+3. Agent: start -> start_backend, stop -> stop_backend
+
 ## 0.1.9
 
 1. -_Active._agent

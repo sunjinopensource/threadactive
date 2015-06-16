@@ -1,10 +1,8 @@
 import sys
 import threading
-import inspect
-import ctypes
 
 
-__version__ = '0.1.9'
+__version__ = '1.0.0'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -17,19 +15,12 @@ else:
     raise RuntimeError('Unsupported python version.')
 
 
-def done_message():
-    pass
+def done(): pass
+def abort(): pass
+def clear(): pass
 
 
-def abort_message():
-    pass
-
-
-def clear_message():
-    pass
-
-
-class _Active(threading.Thread):
+class _Backend(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self._queue = _Queue.Queue()
@@ -37,7 +28,7 @@ class _Active(threading.Thread):
         self.setDaemon(True)
         self.start()
 
-    def stop(self, timeout=None, msg=done_message):
+    def stop(self, timeout=None, msg=done):
         self.send(msg)
         self.join(timeout)
         # self._agent = None
@@ -52,17 +43,17 @@ class _Active(threading.Thread):
             if self._abort_event.is_set():
                 break
             msg = self._queue.get()
-            if msg is done_message:
+            if msg is done:
                 break
             ret = msg()
             if ret is False:
                 break
 
     def send(self, msg):
-        if msg is abort_message:
+        if msg is abort:
             if not self._abort_event.is_set():
                 self._abort_event.set()
-        elif msg is clear_message:
+        elif msg is clear:
             while not self._queue.empty():
                 self._queue.get()
         else:
@@ -70,32 +61,29 @@ class _Active(threading.Thread):
 
 
 class Agent(object):
-    def __init__(self, auto_start=True):
+    def __init__(self, auto_start_backend=True):
         self._main_thread_id = threading.current_thread().ident
-        self._active = None
-        self._queue = None
-        if auto_start:
-            self.start()
-
-    def start(self):
-        assert not self.is_started()
-        self._active = _Active()
         self._queue = _Queue.Queue()
+        self._backend = None
+        if auto_start_backend:
+            self.start_backend()
 
-    def stop(self, timeout=None, msg=done_message):
-        if not self.is_started():
+    def start_backend(self):
+        assert not self.is_backend_started()
+        self._backend = _Backend()
+
+    def stop_backend(self, timeout=None, msg=done):
+        if not self.is_backend_started():
             return
-        self._active.stop(timeout, msg)
-        self._active = None
-        self._queue = None
+        self._backend.stop(timeout, msg)
+        self._backend = None
 
     def send_to_frontend(self, msg):
-        assert self.is_started()
         self._queue.put(msg)
 
     def send_to_backend(self, msg):
-        assert self.is_started()
-        self._active.send(msg)
+        assert self.is_backend_started()
+        self._backend.send(msg)
 
     def tick(self):
         """Handle all messages received from background
@@ -104,12 +92,10 @@ class Agent(object):
             True: on no message or all message handled
             False: on handle message error
         """
-        assert self.is_started()
 
         # thread maybe exit on error, in that case, the related active object will not be auto destroyed, so destroy it
-        if self._active and not self._active.is_alive():
+        if self._backend and not self._backend.is_alive():
             self.stop()
-            return False
 
         while True:
             try:
@@ -122,8 +108,8 @@ class Agent(object):
 
         return True
 
-    def is_started(self):
-        return self._active is not None
+    def is_backend_started(self):
+        return self._backend is not None
 
 
 class _CallWrapper:
