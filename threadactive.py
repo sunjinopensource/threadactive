@@ -2,7 +2,7 @@ import sys
 import threading
 
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 
 _PY2 = sys.version_info[0] == 2
@@ -95,7 +95,7 @@ class Agent(object):
 
         # thread maybe exit on error, in that case, the related active object will not be auto destroyed, so destroy it
         if self._backend and not self._backend.is_alive():
-            self.stop()
+            self.stop_backend()
 
         while True:
             try:

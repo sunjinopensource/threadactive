@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.0.1
+fix: in Agent.tick -> self.stop -> self.stop_backend
+
 ## 1.0.0
 
 1. _Active -> _Backend
